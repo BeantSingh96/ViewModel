@@ -1,0 +1,33 @@
+public class MyTripsViewModel extends ViewModel {
+
+    MutableLiveData<MyTripsPojo> myTripsPojoMLD;
+
+    public LiveData<MyTripsPojo> myTrips(final Activity activity, String id) {
+        myTripsPojoMLD = new MutableLiveData<>();
+
+        ApiInterface apiInterface = ApiClient.getClient().create(ApiInterface.class);
+
+        if (CommonUtils.InternetCheck(activity)) {
+            CommonUtils.showProgress(activity);
+            apiInterface.driverTripsList(id).enqueue(new Callback<MyTripsPojo>() {
+                @Override
+                public void onResponse(@NonNull Call<MyTripsPojo> call, @NonNull Response<MyTripsPojo> response) {
+                    CommonUtils.dismiss();
+                    if (response.body() != null) {
+                        myTripsPojoMLD.setValue(response.body());
+                    } else {
+                        Toast.makeText(activity, AppConstants.SOMETHING_WENT_WRONG, Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onFailure(@NonNull Call<MyTripsPojo> call, @NonNull Throwable t) {
+                    CommonUtils.dismiss();
+                    Toast.makeText(activity, t.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
+        } else {
+            Toast.makeText(activity, AppConstants.NETWORK_ISSUE, Toast.LENGTH_SHORT).show();
+        }
+        return myTripsPojoMLD;
+    }
